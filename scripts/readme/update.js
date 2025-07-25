@@ -5,7 +5,7 @@ import { Octokit } from "@octokit/rest";
 const defaults = await fs.readFile("./scripts/readme/defaults.ini", "utf-8");
 const configuration = ini.parse(defaults);
 
-const TOKEN = process.env.GITHUB_TOKEN;
+const TOKEN = process.env.TOKEN;
 const USERNAME = configuration.authentication.username;
 const CONTENT_WIDTH = 64;
 const CONTENT_PADDING = 5;
