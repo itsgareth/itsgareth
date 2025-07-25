@@ -22,5 +22,5 @@ jobs:
 
       - name: Run README update script
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node ./scripts/readme/update.js
+          GH_TOKEN: ${{ secrets.TOKEN }}
+        run: node ./scripts/update-readme/index.js
