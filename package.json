@@ -1,0 +1,11 @@
+{
+  "name": "itsgareth",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@octokit/rest": "^22.0.0",
+    "ini": "^5.0.0"
+  }
+}
