@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import ini from "ini";
 import { Octokit } from "@octokit/rest";
 
-const defaults = await fs.readFile("./scripts/readme/defaults.ini", "utf-8");
+const defaults = await fs.readFile("./scripts/update-readme/defaults.ini", "utf-8");
 const configuration = ini.parse(defaults);
 
 const TOKEN = process.env.TOKEN;
@@ -44,7 +44,7 @@ const CONTENT_PADDING = 5;
     lines_of_code: String(0),
   };
 
-  const template = await fs.readFile("./scripts/readme/template.txt", "utf-8");
+  const template = await fs.readFile("./scripts/update-readme/template.txt", "utf-8");
   const rendered = template.replace(/{{(.*?)}}/g, (_, key) => {
     const value = stats[key.trim()] ?? "N/A";
     const dots = ".".repeat(Math.max(0, CONTENT_WIDTH - CONTENT_PADDING - key.length - value.length));
