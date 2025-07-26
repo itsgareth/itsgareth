@@ -2,15 +2,15 @@ import fs from "fs/promises";
 import ini from "ini";
 import { Octokit } from "@octokit/rest";
 
-const defaults = await fs.readFile("./scripts/update-readme/defaults.ini", "utf-8");
-const configuration = ini.parse(defaults);
-
-const TOKEN = process.env.TOKEN;
-const USERNAME = configuration.authentication.username;
-const CONTENT_WIDTH = 64;
-const CONTENT_PADDING = 5;
-
 (async () => {
+  const defaults = await fs.readFile("./scripts/update-readme/defaults.ini", "utf-8");
+  const configuration = ini.parse(defaults);
+  
+  const TOKEN = process.env.TOKEN;
+  const USERNAME = configuration.authentication.username;
+  const CONTENT_WIDTH = 64;
+  const CONTENT_PADDING = 5;
+
   const octokit = new Octokit({ auth: TOKEN });
   const repos = await octokit.paginate(octokit.rest.repos.listForAuthenticatedUser, { affiliation: "owner", per_page: 100 });
   const current = await octokit.rest.repos.getReadme({ owner: USERNAME, repo: USERNAME });
