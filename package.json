@@ -1,0 +1,11 @@
+{
+  "name": "itsgareth",
+  "type": "module",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@octokit/graphql": "^9.0.1",
+    "@octokit/rest": "^22.0.0",
+    "date-fns": "^4.1.0",
+    "ini": "^5.0.0"
+  }
+}
