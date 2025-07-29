@@ -1,0 +1,92 @@
+name: workflows
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  pre-release:
+    name: pre-release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version-check.outputs.version }}
+      version_changed: ${{ steps.version-check.outputs.changed }}
+    steps:
+      - name: Fetch codebase
+        uses: actions/checkout@v4
+      - name: Check version
+        id: version-check
+        uses: EndBug/version-check@v2
+        with:
+          diff-search: true
+
+  release:
+    name: pre-release / release
+    needs: pre-release
+    runs-on: ubuntu-latest
+    if: ${{ needs.pre-release.outputs.version_changed == 'true' }}
+    steps:
+      - name: Fetch codebase
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: yarn install
+      - name: Build application
+        run: yarn build
+      - name: Archive build output
+        run: tar -czf dist.tar.gz dist/
+      - name: Extract release notes
+        run: |
+          VERSION=${{ needs.pre-release.outputs.version }}
+          sed -n "/## \[v${VERSION}\]/,/## \[v/p" CHANGELOG.md | sed '1d;$d' > release_notes.txt
+          if [ ! -s release_notes.txt ]; then
+            echo "No release notes available for v$VERSION" > release_notes.txt
+          fi
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.pre-release.outputs.version }}
+          release_name: v${{ needs.pre-release.outputs.version }}
+          body_path: release_notes.txt
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist.tar.gz
+          asset_name: dist.tar.gz
+          asset_content_type: application/gzip
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist.tar.gz
+          path: ./dist.tar.gz
+
+  deployment:
+    name: pre-release / release / deployment
+    needs: [pre-release, release]
+    runs-on: ubuntu-latest
+    if: ${{ needs.pre-release.outputs.version_changed == 'true' }}
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist.tar.gz
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Deploy build to VPS
+        run: |
+          rsync -avz --delete \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            dist.tar.gz ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/dist.tar.gz
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            mkdir -p ${{ secrets.VPS_DEPLOYMENT_DIRECTORY }}
+            tar --strip-components=1 -xzf /tmp/dist.tar.gz -C ${{ secrets.VPS_DEPLOYMENT_DIRECTORY }} 
+            rm /tmp/dist.tar.gz
+          EOF
